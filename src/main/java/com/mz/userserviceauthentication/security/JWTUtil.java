@@ -1,5 +1,6 @@
 package com.mz.userserviceauthentication.security;
 
+import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.security.Keys;
@@ -19,6 +20,25 @@ public class JWTUtil {
                 .setExpiration(new Date(System.currentTimeMillis()+EXPIRATION_TIME))
                 .signWith(key)
                 .compact();
+    }
+
+    public static String extractEmail(String token) {
+        Claims claims = Jwts.parserBuilder()
+                .setSigningKey(key)
+                .build()
+                .parseClaimsJws(token)
+                .getBody();
+        return claims.getSubject();
+    }
+
+    public boolean isTokenValid(String token) {
+        try {
+            extractEmail(token);
+            return true;
+        }
+        catch (Exception e) {
+            return false;
+        }
     }
 
     public static String validateToken(String token) {

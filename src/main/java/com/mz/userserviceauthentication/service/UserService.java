@@ -48,4 +48,14 @@ public class UserService {
 
         return Map.of("token", token);
     }
+
+    public UserResponse getCurrentUser(String email) {
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new UserExistsException("User does not exist"));
+        return new UserResponse(
+                user.getId(),
+                user.getName(),
+                user.getEmail()
+        );
+    }
 }
