@@ -3,6 +3,7 @@ package com.mz.expensetracker.service;
 
 import com.mz.expensetracker.dto.ExpenseRequest;
 import com.mz.expensetracker.dto.ExpenseResponse;
+import com.mz.expensetracker.dto.MonthlySummaryExpensesResponseDTO;
 import com.mz.expensetracker.model.Expense;
 import com.mz.expensetracker.model.ExpenseCategory;
 import com.mz.expensetracker.model.RecordStatus;
@@ -16,7 +17,11 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.YearMonth;
+import java.util.List;
 import java.util.Objects;
 
 @Service
@@ -127,4 +132,32 @@ public class ExpenseService {
         expense.setStatus(RecordStatus.I);
         expenseRepository.save(expense);
     }
+
+    public List<MonthlySummaryExpensesResponseDTO> getMonthlyExpenses(
+            String email,
+            int year,
+            int month
+    ){
+        if(month < 1 || month >12){
+            throw new IllegalArgumentException("Month out of range");
+        }
+
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(()->new RuntimeException("User not found"));
+
+        YearMonth yearMonth = YearMonth.of(year, month);
+        LocalDate start = yearMonth.atDay(1);
+        LocalDate end = yearMonth.atEndOfMonth();
+
+        List<Object[]> rows = expenseRepository.findMonthlyCategorySummary(user, start, end);
+
+        return rows.stream()
+                .map(row-> new MonthlySummaryExpensesResponseDTO(
+                        (BigDecimal) row[1],
+                        row[0].toString()
+
+                ))
+                .toList();
+    }
+
 }
