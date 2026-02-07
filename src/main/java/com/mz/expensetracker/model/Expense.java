@@ -38,11 +38,23 @@ public class Expense {
     @JoinColumn(name = "userId",nullable = false)
     private User user;
 
+    @Enumerated(EnumType.STRING)
+    @Column(length = 1,nullable = false)
+    private RecordStatus status = RecordStatus.A;
+
+    private LocalDateTime updatedAt;
+
+
     @PrePersist
     protected void onCreate() {
         this.createdAt = LocalDateTime.now();
+        this.updatedAt = LocalDateTime.now();
     }
 
+    @PreUpdate
+    protected void onUpdate() {
+        this.updatedAt = LocalDateTime.now();
+    }
 
 
     public Expense() {}
@@ -118,5 +130,21 @@ public class Expense {
 
     public void setUser(User user) {
         this.user = user;
+    }
+
+    public RecordStatus getStatus() {
+        return status;
+    }
+
+    public void setStatus(RecordStatus status) {
+        this.status = status;
+    }
+
+    public LocalDateTime getUpdatedAt() {
+        return updatedAt;
+    }
+
+    public void setUpdatedAt(LocalDateTime updatedAt) {
+        this.updatedAt = updatedAt;
     }
 }

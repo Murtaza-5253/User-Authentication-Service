@@ -5,6 +5,7 @@ import com.mz.expensetracker.dto.ExpenseRequest;
 import com.mz.expensetracker.dto.ExpenseResponse;
 import com.mz.expensetracker.model.Expense;
 import com.mz.expensetracker.model.ExpenseCategory;
+import com.mz.expensetracker.model.RecordStatus;
 import com.mz.expensetracker.repository.ExpenseRepository;
 import com.mz.userserviceauthentication.model.User;
 import com.mz.userserviceauthentication.repository.UserRepository;
@@ -75,7 +76,7 @@ public class ExpenseService {
                    pageable
            );
        }else {
-           expenses = expenseRepository.findByUser(user, pageable);
+           expenses = expenseRepository.findByUserAndStatus(user, RecordStatus.A, pageable);
        }
         return expenses.map(this::mapToResponse);
    }
@@ -100,14 +101,30 @@ public class ExpenseService {
         if (!Objects.equals(expense.getUser().getId(),user.getId())) {
             throw new RuntimeException("User not authorized to update expense");
         }
-
-        expense.setTitle(expenseRequest.getTitle());
-        expense.setAmount(expenseRequest.getAmount());
-        expense.setDescription(expenseRequest.getDescription());
-        expense.setCategory(expenseRequest.getCategory());
-        expense.setExpenseDate(expenseRequest.getExpenseDate());
-
+        if(expense.getStatus().equals(RecordStatus.I)) {
+            throw new RuntimeException("Expense is deleted");
+        }
+        else {
+            expense.setTitle(expenseRequest.getTitle());
+            expense.setAmount(expenseRequest.getAmount());
+            expense.setDescription(expenseRequest.getDescription());
+            expense.setCategory(expenseRequest.getCategory());
+            expense.setExpenseDate(expenseRequest.getExpenseDate());
+        }
         Expense updated = expenseRepository.save(expense);
         return mapToResponse(updated);
+    }
+
+    public void deleteExpense(Long id, String email) {
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(()->new RuntimeException("User not found"));
+        Expense expense = expenseRepository.findByIdAndStatus(id,RecordStatus.A)
+                .orElseThrow(()->new RuntimeException("Expense not found"));
+
+        if (!Objects.equals(expense.getUser().getId(),user.getId())) {
+            throw new RuntimeException("User not authorized to delete expense");
+        }
+        expense.setStatus(RecordStatus.I);
+        expenseRepository.save(expense);
     }
 }

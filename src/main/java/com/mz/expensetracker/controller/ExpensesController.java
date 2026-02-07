@@ -54,4 +54,13 @@ public class ExpensesController {
         String email = authentication.getName();
         return expenseService.updateExpense(id,expenseRequest,email);
     }
+
+    @DeleteMapping("/{id}")
+    public void deleteExpense(@PathVariable Long id,Authentication authentication) {
+        if (authentication == null || authentication.getName() == null) {
+            throw new RuntimeException("Authentication name is null");
+        }
+        String email = authentication.getName();
+        expenseService.deleteExpense(id,email);
+    }
 }
